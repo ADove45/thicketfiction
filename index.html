@@ -547,7 +547,7 @@ function vBest(pool){if(!pool.length)return pool;const top=vScore(pool[0]);const
 const FEM=/female|samantha|victoria|karen|moira|tessa|zira|susan|hazel|fiona|allison|ava|serena|kate|nicky|aria|jenny|michelle|sonia|libby|emma|joanna|salli|kimberly|ivy|amy|catherine|martha|flo|sandy|shelley/i;
 const MAL=/\bmale|daniel|alex|fred|david|mark|george|tom\b|oliver|aaron|arthur|guy|ryan|james|matthew|joey|justin|brian|eddy|reed|rocko|grandpa|ralph|albert|bruce|gordon|lee\b|rishi/i;
 function hashN(s){let h=7;for(const c of s)h=(h*31+c.charCodeAt(0))>>>0;return h}
-const VPREF={Aiyana:/\bava\b/i,Vivi:/\bmichelle\b/i};
+const VPREF={Narrator:/\bava\b/i,Aiyana:/\bava\b/i,Vivi:/\bmichelle\b/i};
 function voiceFor(who){
   const vs=ttsVoices(),g=gen(who),h=hashN(who);
   let voice=null,pref=false;const saved=TTS.map[who],kept=v=>!Object.keys(VPREF).some(k=>k!==who&&VPREF[k].test(v.name));
