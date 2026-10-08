@@ -115,7 +115,7 @@ p{margin:0}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:12px}
 .side{display:grid;gap:16px}
 label{display:grid;gap:4px;font-size:14px;font-weight:600;color:var(--muted)}
-input[type=text],input[type=number],select,textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:16px;color:var(--fg)}
+input[type=text],input[type=email],input[type=number],select,textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-size:16px;color:var(--fg)}
 textarea{font-family:var(--read);font-size:18px;line-height:1.55;resize:vertical}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
 .eplist{display:grid;gap:6px}
@@ -165,7 +165,7 @@ textarea{font-family:var(--read);font-size:18px;line-height:1.55;resize:vertical
   <div class="spacer"></div>
   <span id="passchip"></span>
 </div></header>
-<div class="note"><div>Prototype. Payments are simulated and nothing is charged. Your edits save in this browser only. <span class="pals" id="pals"></span><button class="btn sm quiet" id="reset" data-act="reset">Reset demo</button></div></div>
+<div class="note"><div>Prototype. Accounts are simulated: nothing is sent anywhere and nothing is charged. Your edits save in this browser only. <span class="pals" id="pals"></span><button class="btn sm quiet" id="reset" data-act="reset">Reset demo</button></div></div>
 <main class="wrap" id="app"></main>
 <div class="modal" id="modal" hidden></div>
 <div class="toast" id="toast" hidden role="status"></div>
@@ -201,8 +201,8 @@ const story=id=>S.stories.find(s=>s.id===id);
 const epOf=(st,id)=>st&&st.episodes.find(e=>e.id===id);
 function canRead(st,ep){return ep.access==='free'||S.reader.pass}
 function badge(st,ep){
-  if(ep.access==='free')return '<span class="pill free">Free</span>';
-  return S.reader.pass?'<span class="pill own">Included</span>':'<span class="pill pass">Members</span>';
+  if(ep.access==='free')return '<span class="pill free">Open</span>';
+  return S.reader.pass?'<span class="pill own">Unlocked</span>':'<span class="pill pass">Free account</span>';
 }
 function cover(st){return '<div class="cover" style="--h:'+(+st.hue||0)+'"><span class="cg">'+esc(st.genre)+'</span><span class="ct">'+esc(st.title)+'</span><span class="ca">'+esc(st.author)+'</span></div>'}
 function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,2600)}
@@ -211,8 +211,8 @@ function render(){
   $('#tab-store').setAttribute('aria-pressed',U.view!=='studio');
   $('#tab-studio').setAttribute('aria-pressed',U.view==='studio');
   $('#passchip').innerHTML=S.reader.pass
-    ?'<span class="pill pass">Pass active</span> <button class="btn sm quiet" id="pass-cancel" data-act="cancelpass">Cancel</button>'
-    :'<button class="btn sm primary" id="pass-get" data-act="subscribe">Get the Pass, '+money(S.plat.passPrice)+'/mo</button>';
+    ?'<span class="small" id="acct-name">Signed in as <b>'+esc(S.reader.name||'Reader')+'</b></span> <button class="btn sm quiet" id="pass-cancel" data-act="cancelpass">Sign out</button>'
+    :'<button class="btn sm primary" id="pass-get" data-act="subscribe">Create free account</button>';
   const a=$('#app');
   if(U.view==='studio')a.innerHTML=vStudio();
   else if(U.view==='read')a.innerHTML=vRead();
@@ -221,11 +221,11 @@ function render(){
 }
 
 function vStore(){
-  return '<section class="lede"><div><h1>Stories that wait for your next move.</h1><p>Serialized interactive novels. Start every story free, choose what happens, and come back for the next episode.</p></div>'
-  +'<div class="passcard"><b>Thicket Pass</b><p>'+money(S.plat.passPrice)+' a month unlocks every episode of every story. The opening episodes of each story are free. Cancel any time.</p>'
-  +(S.reader.pass?'<span class="pill pass" style="justify-self:start">Pass active</span>':'<button class="btn primary" id="lede-pass" data-act="subscribe">Start the Pass</button>')+'</div></section>'
+  return '<section class="lede"><div><h1>Stories that wait for your next move.</h1><p>Serialized interactive novels. Free to read. Choose what happens, and come back for the next episode.</p></div>'
+  +'<div class="passcard"><b>Free to read</b><p>The opening chapter is open to everyone. A free account unlocks every episode and keeps your place. No card, no charge.</p>'
+  +(S.reader.pass?'<span class="pill own" style="justify-self:start">Signed in as '+esc(S.reader.name||'Reader')+'</span>':'<button class="btn primary" id="lede-pass" data-act="subscribe">Create free account</button>')+'</div></section>'
   +'<p class="sect">On the shelf</p><div class="shelf">'+S.stories.map(st=>'<button class="book" data-act="open" data-id="'+st.id+'">'+cover(st)
-  +'<h3>'+esc(st.title)+'</h3><span class="muted small">'+st.episodes.length+' episode'+(st.episodes.length===1?'':'s')+' · '+st.episodes.filter(e=>e.access==='free').length+' free</span></button>').join('')+'</div>';
+  +'<h3>'+esc(st.title)+'</h3><span class="muted small">'+st.episodes.length+' episode'+(st.episodes.length===1?'':'s')+' · '+st.episodes.filter(e=>e.access==='free').length+' open without an account</span></button>').join('')+'</div>';
 }
 
 function vStory(){
@@ -285,7 +285,7 @@ function checks(ep){
   return out.join('');
 }
 function payLine(ep){
-  return ep.access==='free'?'Anyone can read this episode. Free episodes are how readers find the story.':'Only members with an active Pass can read this episode.';
+  return ep.access==='free'?'Anyone can read this episode without signing in. Open episodes are how readers find the story.':'Readers need a free account to read this episode.';
 }
 function edWords(st,alt){let n=0;st.episodes.forEach(e=>e.scenes.forEach(sc=>{const t=alt&&sc.alt?sc.alt.text:sc.text;n+=String(t||'').split(/\s+/).filter(Boolean).length}));return n.toLocaleString()}
 function edPanel(st){if(!st.edition)return '';const sh=st.edition==='short';
@@ -301,9 +301,7 @@ function vStudio(){
   let side='<div class="side"><div class="panel"><label>Story<select id="st-pick" data-bind="pick">'+S.stories.map(s=>'<option value="'+s.id+'"'+(s.id===st.id?' selected':'')+'>'+esc(s.title)+'</option>').join('')+'</select></label>'
   +'<button class="btn sm" data-act="newstory">New story</button></div>'
   +'<div class="panel"><p class="sect" style="margin:0">Episodes</p><div class="eplist" id="eplist">'+epList(st)+'</div><button class="btn sm" data-act="newep">Add episode</button></div>'
-  +'<div class="panel"><p class="sect" style="margin:0">Store settings</p><div class="grid2"><label>Pass price per month<input type="number" min="0" step="0.5" id="pl-pass" data-bind="plat" data-k="passPrice" value="'+S.plat.passPrice+'"></label>'
-  +'</div>'
-  +'</div></div>';
+  +'</div>';
 
   let work='<div class="work"><div class="panel"><p class="sect" style="margin:0">Story details</p><div class="grid2">'
   +'<label>Title<input type="text" id="st-title" data-bind="story" data-k="title" value="'+esc(st.title)+'"></label>'
@@ -316,13 +314,13 @@ function vStudio(){
     work+='<div class="panel"><div class="row" style="justify-content:space-between"><p class="sect" style="margin:0">Episode '+(st.episodes.indexOf(ep)+1)+'</p>'
     +'<div class="row"><button class="btn sm primary" data-act="preview">Preview as reader</button><button class="btn sm quiet" data-act="delep" data-arm="0">Remove episode</button></div></div>'
     +'<div class="grid2"><label>Episode title<input type="text" id="ep-title" data-bind="ep" data-k="title" value="'+esc(ep.title)+'"></label>'
-    +'<label>Who can read it<select id="ep-access" data-bind="ep" data-k="access"><option value="free"'+(ep.access==='free'?' selected':'')+'>Free for everyone</option><option value="pass"'+(ep.access!=='free'?' selected':'')+'>Members only</option></select></label></div>'
+    +'<label>Who can read it<select id="ep-access" data-bind="ep" data-k="access"><option value="free"'+(ep.access==='free'?' selected':'')+'>Open to everyone</option><option value="pass"'+(ep.access!=='free'?' selected':'')+'>Free account needed</option></select></label></div>'
     +'<p class="small muted" id="payline">'+payLine(ep)+'</p><ul class="checks" id="checks">'+checks(ep)+'</ul></div>';
     work+=ep.scenes.map((s,i)=>sceneCard(ep,s,i)).join('')+'<button class="btn" data-act="newscene" style="justify-self:start">Add scene</button>';
   }
   return '<div class="studio">'+side+work+'</div></div>';
 }
-function epList(st){return st.episodes.map((e,i)=>'<button class="epbtn" data-act="pickep" data-ep="'+e.id+'" aria-pressed="'+(e.id===U.sEp)+'"><span>'+(i+1)+'. '+esc(e.title||'Untitled')+'</span><span class="pill '+(e.access==='free'?'free':'pass')+'">'+(e.access==='free'?'Free':'Members')+'</span></button>').join('')}
+function epList(st){return st.episodes.map((e,i)=>'<button class="epbtn" data-act="pickep" data-ep="'+e.id+'" aria-pressed="'+(e.id===U.sEp)+'"><span>'+(i+1)+'. '+esc(e.title||'Untitled')+'</span><span class="pill '+(e.access==='free'?'free':'pass')+'">'+(e.access==='free'?'Open':'Account')+'</span></button>').join('')}
 function sceneCard(ep,s,i){
   const dest=c=>'<option value="END"'+(c.to==='END'?' selected':'')+'>End of episode</option>'+ep.scenes.filter(x=>x.id!==s.id).map(x=>'<option value="'+x.id+'"'+(c.to===x.id?' selected':'')+'>Go to: '+esc(x.name||'Untitled')+'</option>').join('');
   return '<div class="scene"><div class="scene-h">'+(i===0?'<span class="tag">Opening</span>':'')+'<input type="text" aria-label="Scene name" id="sn-'+s.id+'" data-bind="scene" data-sid="'+s.id+'" data-k="name" value="'+esc(s.name)+'">'
@@ -340,10 +338,16 @@ function refreshSide(){const st=story(U.sStory),ep=epOf(st,U.sEp);if(!st)return;
 
 /* ---------- checkout ---------- */
 function gate(st,ep){
-  const h='<div class="sheet"><h2>Keep reading with the Pass</h2><p>"'+esc(ep.title)+'" is for members. '+money(S.plat.passPrice)+' a month unlocks every episode of every story. Cancel any time.</p>'
-  +'<p class="muted small">Simulated checkout, no card is charged.</p><button class="btn primary" data-act="pay" data-how="pass">Start the Pass, '+money(S.plat.passPrice)+'/mo</button><button class="btn quiet" data-act="close">Not now</button></div>';
-  const m=$('#modal');m.innerHTML=h;m.hidden=false;m.dataset.ep=ep.id;
+  const h='<form class="sheet" id="signup"><h2>Create your free account</h2><p>'+(ep?'"'+esc(ep.title)+'" needs a free account. ':'')+'An account unlocks every episode and keeps your place. No card, no charge.</p>'
+  +'<label>Name<input type="text" id="su-name" autocomplete="name" required></label><label>Email<input type="email" id="su-email" autocomplete="email" required></label>'
+  +'<p class="muted small" id="su-msg">Prototype: your details stay in this browser and are not sent anywhere.</p><button class="btn primary" type="submit" id="su-go">Create free account</button><button class="btn quiet" type="button" data-act="close">Not now</button></form>';
+  const m=$('#modal');m.innerHTML=h;m.hidden=false;m.dataset.ep=ep?ep.id:'';const n=$('#su-name');if(n)n.focus();
 }
+document.addEventListener('submit',e=>{if(e.target.id!=='signup')return;e.preventDefault();
+  const name=$('#su-name').value.trim(),email=$('#su-email').value.trim(),msg=$('#su-msg');
+  if(!name){msg.textContent='Please enter your name.';return}
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){msg.textContent='Please enter a valid email address.';return}
+  S.reader.pass=true;S.reader.name=name;S.reader.email=email;save();const m=$('#modal'),id=m.dataset.ep;m.hidden=true;toast('Welcome, '+name+'. Every episode is unlocked.');if(id)openEp(id);else render()});
 function openEp(epId){
   const st=story(U.story),ep=epOf(st,epId);if(!ep)return;
   if(!U.preview&&!canRead(st,ep)){gate(st,ep);return}
@@ -361,8 +365,8 @@ document.addEventListener('click',e=>{
     if(t){U.trail.push({id:t.id,took:c.label});U.scene=t.id;render();const n=document.getElementById('now');if(n)n.scrollIntoView({block:'start'})}
     else{if(!U.preview){S.reader.done[ep.id]=true;save()}if(c.label==='Continue')U.took='';
       const nx=st.episodes[st.episodes.indexOf(ep)+1];$('.choices').outerHTML='<p class="took">You chose: '+esc(c.label)+'</p>'+endCard(st,nx)}}
-  else if(a==='subscribe'){S.reader.pass=true;save();render();toast('Pass started (simulated).')}
-  else if(a==='cancelpass'){S.reader.pass=false;save();render();toast('Pass cancelled.')}
+  else if(a==='subscribe'){gate(null,null)}
+  else if(a==='cancelpass'){S.reader.pass=false;save();render();toast('Signed out.')}
   else if(a==='buyseason'){S.reader.seasons[st.id]=true;save();render();toast('Season purchased (simulated).')}
   else if(a==='pay'){const m=$('#modal'),how=b.dataset.how,id=m.dataset.ep;
     if(how==='pass')S.reader.pass=true;else if(how==='season')S.reader.seasons[st.id]=true;else S.reader.owned[id]=true;
