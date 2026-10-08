@@ -94,6 +94,12 @@ p{margin:0}
 .tts .vrow{display:grid;grid-template-columns:minmax(90px,130px) 1fr;gap:8px;align-items:center;margin-top:6px;font-size:14px;color:var(--fg)}
 .tts .vrow select{width:100%}
 .prose p.speaking{background:var(--sunk);box-shadow:-8px 0 0 var(--sunk),8px 0 0 var(--sunk);border-radius:3px}
+.tookpct{color:var(--fg)} .tookpct em{color:var(--muted);font-style:normal;font-size:13px}
+.community{margin-top:30px;border-top:1px solid var(--line);padding-top:22px;display:grid;gap:12px}
+.cmform{display:grid;gap:8px;justify-items:start} .cmform label{width:100%}
+.cmlist{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.cmitem{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:grid;gap:6px}
+.cmitem p{margin:0;font-family:var(--read);font-size:17px} .cmhead{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
 .edrow{display:grid;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
 .spk summary{cursor:pointer;color:var(--muted);font-weight:600}
 .spk-list{display:grid;gap:6px;margin-top:8px}
@@ -250,7 +256,7 @@ function vRead(){
   if(!trail.length)return h+'<p class="muted">This episode has no scenes yet.</p></article>';
   trail.forEach((x,k)=>{
     h+='<div'+(k===trail.length-1&&k>0?' id="now"':'')+'>';
-    if(x.t.took&&x.t.took!=='Continue')h+='<p class="took">You chose: '+esc(x.t.took)+'</p>';
+    if(x.t.took&&x.t.took!=='Continue')h+=tookLine(k>0?trail[k-1].sc:null,x.t.took);
     h+='<div class="prose">'+String(x.sc.text||'').split(/\n\s*\n/).map(p=>'<p>'+esc(p)+'</p>').join('')+'</div></div>';
   });
   const sc=trail[trail.length-1].sc,live=sc.choices.filter(c=>c.label);
@@ -261,7 +267,7 @@ function vRead(){
 function endCard(st,next){
   return '<div class="endcard"><p class="sect" style="margin:0">End of episode</p>'+(next
    ?'<h3 style="font-size:24px">Next: '+esc(next.title)+'</h3><div class="row">'+badge(st,next)+'<button class="btn primary" data-act="read" data-ep="'+next.id+'">'+(canRead(st,next)||U.preview?'Keep reading':'Unlock the next episode')+'</button></div>'
-   :'<h3 style="font-size:24px">You are caught up.</h3><p class="muted">New episodes appear here when the author publishes them.</p>')+'</div>';
+   :'<h3 style="font-size:24px">You are caught up.</h3><p class="muted">New episodes appear here when the author publishes them.</p>')+'</div>'+(U.preview||!epOf(st,U.ep)?'':community(epOf(st,U.ep)));
 }
 
 /* ---------- studio ---------- */
@@ -378,7 +384,7 @@ document.addEventListener('click',e=>{
     U.took=c.label;const t=ep.scenes.find(s=>s.id===c.to);
     if(t){U.trail.push({id:t.id,took:c.label});U.scene=t.id;render();const n=document.getElementById('now');if(n)n.scrollIntoView({block:'start'})}
     else{if(!U.preview){S.reader.done[ep.id]=true;save()}if(c.label==='Continue')U.took='';
-      const nx=st.episodes[st.episodes.indexOf(ep)+1];$('.choices').outerHTML='<p class="took">You chose: '+esc(c.label)+'</p>'+endCard(st,nx)}}
+      const nx=st.episodes[st.episodes.indexOf(ep)+1];$('.choices').outerHTML=(c.label==='Continue'?'':tookLine(sc,c.label))+endCard(st,nx)}}
   else if(a==='subscribe'){gate(null,null)}
   else if(a==='screenname'){screenSheet()}
   else if(a==='cancelpass'){S.reader.pass=false;save();render();toast('Signed out.')}
@@ -642,6 +648,35 @@ document.addEventListener('input',e=>{const t=e.target;
 document.addEventListener('click',e=>{const b=e.target.closest('[data-spkadd]');if(!b)return;const f=spkFind(b.dataset.spkadd),inp=document.getElementById('spkn-'+b.dataset.spkadd),n=inp&&inp.value.trim();
   if(!n||!f.st)return;f.st.cast=f.st.cast||[];if(!f.st.cast.includes(n))f.st.cast.push(n);save();SPK_OPEN[b.dataset.spkadd]=true;render();toast(n+' added to the speaker menus.')});
 document.addEventListener('toggle',e=>{const t=e.target;if(t.classList&&t.classList.contains('spk')&&t.id)SPK_OPEN[t.id.slice(4)]=t.open},true);
+
+/* ---------- community (sample data in the prototype) ---------- */
+const cmHash=s=>{let h=7;for(const c of String(s))h=(h*31+c.charCodeAt(0))>>>0;return h};
+function choicePct(sc,label){const live=sc.choices.filter(c=>c.label&&c.label!=='Continue');if(live.length<2)return null;
+  const w=live.map(c=>20+cmHash(sc.id+'|'+c.label)%60),tot=w.reduce((a,b)=>a+b,0),i=live.findIndex(c=>c.label===label);return i<0?null:Math.round(100*w[i]/tot)}
+function tookLine(sc,label){const p=sc?choicePct(sc,label):null;return '<p class="took">You chose: '+esc(label)+(p==null?'':' <span class="tookpct">· '+p+'% of readers chose this <em>(sample)</em></span>')+'</p>'}
+const CM_NAMES=['TideWatcher','NightOwlReads','SeaIslandGal','PageTurner_J','moss_and_salt','BlueHourBooks','LowcountryLo','InkAndEmbers','QuietHarbor','StormPetrel'];
+const CM_LINES=['I did not see that coming.','Going back to try the other choice.','The dialogue in this one is so good.','I need the next episode right now.','Reading this with the lights on.','Who else picked the risky option?','The island feels like a character all by itself.','I trust nobody in this family.','That last line gave me chills.','Listening to this one on read-aloud was worth it.','My heart is racing a little.','I keep changing my mind about who to follow.'];
+const CM_AGO=['2 hours ago','yesterday','2 days ago','4 days ago','last week'];
+function cm(){S.comm=S.comm||{posts:{},likes:{},hidden:{}};return S.comm}
+function cmList(ep){const h=cmHash(ep.id),out=[];for(let k=0;k<3;k++){const x=cmHash(ep.id+'#'+k);out.push({id:ep.id+'-s'+k,name:CM_NAMES[(h+k*3)%CM_NAMES.length],text:CM_LINES[(x)%CM_LINES.length],at:CM_AGO[(k+h)%CM_AGO.length],likes:1+x%14,sample:true})}
+  const seen={};const samples=out.filter(c=>!seen[c.text]&&(seen[c.text]=1));
+  return (cm().posts[ep.id]||[]).map(p=>Object.assign({likes:0,mine:true,at:'just now'},p)).reverse().concat(samples).filter(c=>!cm().hidden[c.id])}
+function community(ep){const c=cm(),list=cmList(ep);
+  let h='<section class="community" id="community"><p class="sect" style="margin:0">Readers on this episode</p><p class="small muted" style="margin:0">Prototype: the other readers and their comments are samples. Yours are saved in this browser only.</p>';
+  h+=S.reader.pass?'<form id="cmform" class="cmform"><label><span>Comment as <b>'+esc(who())+'</b></span><textarea id="cm-text" rows="2" maxlength="500" placeholder="What did you think? Please keep spoilers to this episode."></textarea></label><button class="btn sm primary" type="submit" id="cm-post">Post comment</button></form>'
+    :'<div class="row"><button class="btn sm primary" id="cm-join" data-act="subscribe">Create a free account to comment</button></div>';
+  h+='<ul class="cmlist">'+list.map(x=>{const liked=!!c.likes[x.id];return '<li class="cmitem"><div class="cmhead"><b>'+esc(x.name)+'</b><span class="small muted">'+esc(x.at)+(x.sample?' · sample':'')+'</span></div><p>'+esc(x.text)+'</p><div class="row">'
+    +'<button class="btn sm quiet" data-cm="like" data-id="'+x.id+'" aria-pressed="'+liked+'">'+(liked?'♥':'♡')+' '+(x.likes+(liked?1:0))+'</button>'
+    +(x.mine?'<button class="btn sm quiet" data-cm="del" data-id="'+x.id+'">Delete</button>':'<button class="btn sm quiet" data-cm="report" data-id="'+x.id+'">Report</button>')+'</div></li>'}).join('')+'</ul></section>';
+  return h}
+function cmRefresh(){const st=story(U.story),ep=epOf(st,U.ep),el=document.getElementById('community');if(ep&&el)el.outerHTML=community(ep)}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-cm]');if(!b)return;const c=cm(),id=b.dataset.id,a=b.dataset.cm;
+  if(a==='like'){if(!S.reader.pass){gate(null,null);return}if(c.likes[id])delete c.likes[id];else c.likes[id]=true}
+  else if(a==='report'){c.hidden[id]=true;toast('Reported. The comment is hidden for you.')}
+  else if(a==='del'){Object.keys(c.posts).forEach(k=>{c.posts[k]=c.posts[k].filter(p=>p.id!==id)});toast('Comment deleted.')}
+  save();cmRefresh()});
+document.addEventListener('submit',e=>{if(e.target.id!=='cmform')return;e.preventDefault();const t=$('#cm-text').value.trim();if(!t)return;
+  const c=cm();(c.posts[U.ep]=c.posts[U.ep]||[]).push({id:'c'+Date.now().toString(36),name:who(),text:t.slice(0,500)});save();cmRefresh();toast('Comment posted.')});
 
 applyPal(PAL);
 render();
