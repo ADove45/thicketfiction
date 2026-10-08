@@ -5,7 +5,7 @@ Each choice point now opens with a question. These 63 are drafts for you to revi
 **1. Chapter One, Part 1**  
 Aiyana needs to get home. Should she:  
 - Cut through the back, out of sight
-- Walk past the bonfire
+- Let Vivi lead her past the bonfire
 
 **2. Chapter One, Part 2**  
 Charii’s portrait is watching. Should Aiyana:  
