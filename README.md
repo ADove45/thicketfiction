@@ -2,7 +2,7 @@
 
 Private working copy of the ThicketFiction prototype: a reader and a writing Studio for serialized interactive novels.
 
-**Launch title:** *The Everlasting* by Rasheedah Prioleau. 52 episodes; Chapter One is free, the rest sit behind the Thicket Pass.
+**Launch title:** *The Everlasting* by Rasheedah Prioleau. 52 episodes; Chapter One is free, the rest sit behind the Thicket Pass. Two editions are stored: a condensed edition (about 19,100 words, what readers see by default) and the full manuscript (57,610 words). Switch between them in the Studio under Story details. `condensed-edition-cuts.md` lists what the condensed edition leaves out.
 
 ## Keep this repository private
 
