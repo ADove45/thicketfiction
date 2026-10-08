@@ -211,7 +211,7 @@ function render(){
   $('#tab-store').setAttribute('aria-pressed',U.view!=='studio');
   $('#tab-studio').setAttribute('aria-pressed',U.view==='studio');
   $('#passchip').innerHTML=S.reader.pass
-    ?'<span class="small" id="acct-name">Signed in as <b>'+esc(who())+'</b></span> <button class="btn sm" id="sn-edit" data-act="screenname">'+(S.reader.screen?'Change screen name':'Pick a screen name')+'</button> <button class="btn sm quiet" id="pass-cancel" data-act="cancelpass">Sign out</button>'
+    ?'<span class="small" id="acct-name">Signed in as <b>'+esc(who())+'</b></span> <button class="btn sm" id="sn-edit" data-act="screenname">Change screen name</button> <button class="btn sm quiet" id="pass-cancel" data-act="cancelpass">Sign out</button>'
     :'<button class="btn sm primary" id="pass-get" data-act="subscribe">Create free account</button>';
   const a=$('#app');
   if(U.view==='studio')a.innerHTML=vStudio();
@@ -339,27 +339,28 @@ function refreshSide(){const st=story(U.sStory),ep=epOf(st,U.sEp);if(!st)return;
 /* ---------- checkout ---------- */
 function gate(st,ep){
   const h='<form class="sheet" id="signup"><h2>Create your free account</h2><p>'+(ep?'"'+esc(ep.title)+'" needs a free account. ':'')+'An account unlocks every episode and keeps your place. No card, no charge.</p>'
-  +'<div class="grid2"><label>First name<input type="text" id="su-first" autocomplete="given-name" required></label><label>Last name<input type="text" id="su-last" autocomplete="family-name" required></label></div><label>Email<input type="email" id="su-email" autocomplete="email" required></label>'
+  +'<div class="grid2"><label>First name<input type="text" id="su-first" autocomplete="given-name" required></label><label>Last name<input type="text" id="su-last" autocomplete="family-name" required></label></div><label>Screen name<input type="text" id="su-screen" maxlength="24" autocomplete="nickname" required></label><p class="muted small" style="margin:-6px 0 0">The name other readers will see. 3 to 24 characters: letters, numbers, spaces, dashes or underscores.</p><label>Email<input type="email" id="su-email" autocomplete="email" required></label>'
   +'<p class="muted small" id="su-msg">Prototype: your details stay in this browser and are not sent anywhere.</p><button class="btn primary" type="submit" id="su-go">Create free account</button><button class="btn quiet" type="button" data-act="close">Not now</button></form>';
   const m=$('#modal');m.innerHTML=h;m.hidden=false;m.dataset.ep=ep?ep.id:'';const n=$('#su-first');if(n)n.focus();
 }
 document.addEventListener('submit',e=>{if(e.target.id!=='signup')return;e.preventDefault();
-  const first=$('#su-first').value.trim(),last=$('#su-last').value.trim(),email=$('#su-email').value.trim(),msg=$('#su-msg');
+  const first=$('#su-first').value.trim(),last=$('#su-last').value.trim(),email=$('#su-email').value.trim(),screen=$('#su-screen').value.trim().replace(/\s+/g,' '),msg=$('#su-msg');
   if(!first){msg.textContent='Please enter your first name.';return}
   if(!last){msg.textContent='Please enter your last name.';return}
+  if(!/^[A-Za-z0-9 _-]{3,24}$/.test(screen)){msg.textContent='Please pick a screen name of 3 to 24 characters: letters, numbers, spaces, dashes or underscores.';return}
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){msg.textContent='Please enter a valid email address.';return}
-  S.reader.pass=true;S.reader.first=first;S.reader.last=last;S.reader.name=first;S.reader.screen='';S.reader.email=email;save();const m=$('#modal'),id=m.dataset.ep;m.hidden=true;toast('Welcome, '+first+'. Every episode is unlocked.');if(id)openEp(id);else render()});
+  S.reader.pass=true;S.reader.first=first;S.reader.last=last;S.reader.name=first;S.reader.screen=screen;S.reader.email=email;save();const m=$('#modal'),id=m.dataset.ep;m.hidden=true;toast('Welcome, '+screen+'. Every episode is unlocked.');if(id)openEp(id);else render()});
 const who=()=>S.reader.screen||S.reader.first||S.reader.name||'Reader';
 function screenSheet(){
   const h='<form class="sheet" id="screenform"><h2>Your screen name</h2><p>This is the name other readers will see. Your first and last name stay private.</p>'
   +'<label>Screen name<input type="text" id="sn-name" maxlength="24" autocomplete="nickname" value="'+esc(S.reader.screen||'')+'" placeholder="'+esc(S.reader.first||'')+'"></label>'
-  +'<p class="muted small" id="sn-msg">3 to 24 characters: letters, numbers, spaces, dashes or underscores. Leave it empty to use your first name.</p><button class="btn primary" type="submit" id="sn-go">Save screen name</button><button class="btn quiet" type="button" data-act="close">Cancel</button></form>';
+  +'<p class="muted small" id="sn-msg">3 to 24 characters: letters, numbers, spaces, dashes or underscores. </p><button class="btn primary" type="submit" id="sn-go">Save screen name</button><button class="btn quiet" type="button" data-act="close">Cancel</button></form>';
   const m=$('#modal');m.innerHTML=h;m.hidden=false;m.dataset.ep='';const n=$('#sn-name');if(n){n.focus();n.select()}
 }
 document.addEventListener('submit',e=>{if(e.target.id!=='screenform')return;e.preventDefault();
   const v=$('#sn-name').value.trim().replace(/\s+/g,' '),msg=$('#sn-msg');
-  if(v&&!/^[A-Za-z0-9 _-]{3,24}$/.test(v)){msg.textContent='Use 3 to 24 characters: letters, numbers, spaces, dashes or underscores.';return}
-  S.reader.screen=v;save();$('#modal').hidden=true;render();toast(v?'Screen name saved: '+v:'Screen name cleared. Showing your first name.')});
+  if(!/^[A-Za-z0-9 _-]{3,24}$/.test(v)){msg.textContent='Use 3 to 24 characters: letters, numbers, spaces, dashes or underscores.';return}
+  S.reader.screen=v;save();$('#modal').hidden=true;render();toast('Screen name saved: '+v)});
 
 function openEp(epId){
   const st=story(U.story),ep=epOf(st,epId);if(!ep)return;
